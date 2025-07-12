@@ -1,0 +1,247 @@
+/* Main App Styling */
+:root {
+  --primary-color: #39ff14; /* Matrix green */
+  --bg-color: #0a0f0a;
+  --text-color: #e0e0e0;
+  --accent-color: #ff6b6b;
+  --secondary-color: #4ec9b0;
+  --border-color: #2a3a2a;
+  --input-bg: #0f1a0f;
+  --console-bg: rgba(10, 15, 10, 0.9);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  font-family: 'Courier New', monospace;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem;
+  background-color: var(--bg-color);
+}
+
+/* Header Styles */
+.app-header {
+  text-align: center;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 1.5rem;
+}
+
+.app-header h1 {
+  color: var(--primary-color);
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 5px rgba(57, 255, 20, 0.5);
+}
+
+.app-header p {
+  color: var(--secondary-color);
+  font-size: 1.1rem;
+}
+
+/* Game Container */
+.game-container {
+  display: flex;
+  flex: 1;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Console Styles */
+.game-console {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--console-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+.console-output {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  height: 60vh;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid var(--border-color);
+  font-family: 'Courier New', monospace;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.console-line {
+  margin-bottom: 0.5rem;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.console-input {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background-color: var(--input-bg);
+}
+
+.prompt {
+  color: var(--primary-color);
+  margin-right: 0.5rem;
+  font-weight: bold;
+}
+
+.console-input input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--primary-color);
+  font-family: 'Courier New', monospace;
+  font-size: 1rem;
+  outline: none;
+  padding: 0.5rem 0;
+}
+
+/* Sidebar Styles */
+.game-sidebar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 250px;
+}
+
+.location, .inventory {
+  background-color: var(--console-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1rem;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.location h3, .inventory h3 {
+  color: var(--primary-color);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 1.1rem;
+}
+
+.path {
+  font-family: 'Courier New', monospace;
+  color: var(--secondary-color);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  word-break: break-all;
+}
+
+.inventory ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.inventory li {
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--border-color);
+  color: var(--secondary-color);
+}
+
+/* Loading Animation */
+.loading {
+  color: var(--primary-color);
+  font-style: italic;
+  padding: 0.5rem 0;
+}
+
+.loading:after {
+  content: '...';
+  animation: dots 1.5s steps(5, end) infinite;
+  display: inline-block;
+  width: 0;
+  position: relative;
+  vertical-align: bottom;
+  overflow: hidden;
+}
+
+@keyframes dots {
+  0%, 20% { width: 0; }
+  40% { width: 1.2em; }
+  60%, 100% { width: 0; }
+}
+
+/* Footer */
+.app-footer {
+  text-align: center;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border-color);
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .game-container {
+    flex-direction: column;
+  }
+  
+  .game-sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .location, .inventory {
+    flex: 1;
+    min-width: 200px;
+  }
+}
+
+/* Terminal-like Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a4a3a;
+}
+
+/* Typewriter effect for welcome message */
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: var(--primary-color); }
+}
