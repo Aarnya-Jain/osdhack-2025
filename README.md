@@ -100,7 +100,3 @@ Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTIN
 ## 📄 License
 
 This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.
-
----
-
-Let me know if you'd like to add badges, a banner, or ASCII dungeon art!
