@@ -8,13 +8,14 @@ type FileItem = {
   type: 'file' | 'dir';
   aiDescription?: string;
   content?: string;
+  decodedContent?: string;
 };
 
 type GameState = {
   currentPath: string;
   currentDir: FileItem[];
   history: string[];
-  breadcrumbs: string[]; // Add breadcrumbs for navigation
+  breadcrumbs: string[];
   inventory: string[];
   messages: string[];
   repoUrl: string;
@@ -30,7 +31,7 @@ function App() {
     currentPath: '',
     currentDir: [],
     history: [],
-    breadcrumbs: [], // Initialize breadcrumbs
+    breadcrumbs: [],
     inventory: [],
     messages: [
       'Welcome to The Coder\'s Dungeon!',
@@ -107,7 +108,7 @@ function App() {
           currentPath: '',
           currentDir: [],
           history: [],
-          breadcrumbs: [], // Reset breadcrumbs
+          breadcrumbs: [],
           inventory: [],
           messages: ['🚪 You step through the portal and leave the dungeon. Enter a new repository to begin another adventure.'],
           repoUrl: '',
@@ -153,7 +154,6 @@ function App() {
     }
   };
 
-  // Add function to handle going back
   const handleBack = async () => {
     if (gameState.breadcrumbs.length === 0) {
       addMessage('🏛️ You are already at the entrance of the dungeon. There is nowhere to go back to.');
@@ -235,7 +235,7 @@ function App() {
           currentPath: newPath,
           currentDir: response.data,
           history: [...prev.history, newPath],
-          breadcrumbs: [...prev.breadcrumbs, prev.currentPath], // Add current path to breadcrumbs
+          breadcrumbs: [...prev.breadcrumbs, prev.currentPath],
           messages: [
             ...prev.messages,
             randomDescription,
@@ -243,9 +243,13 @@ function App() {
           ],
         }));
       } else {
-        // It's a file
-        addMessage(`📜 You examine the ${dirName} artifact.`);
-        addMessage(response.data.aiDescription || 'This artifact\'s purpose is shrouded in mystery...');
+        // It's a file - fetch with AI description
+        addMessage(`📜 You approach the ${dirName} artifact...`);
+        if (response.data.aiDescription) {
+          addMessage(`🔮 ${response.data.aiDescription}`);
+        } else {
+          addMessage('This artifact\'s purpose is shrouded in mystery...');
+        }
       }
     } catch (error: any) {
       addMessage(`🚫 The path to ${dirName} is blocked by ancient wards. ${error.response?.data?.error || error.message}`);
@@ -274,36 +278,94 @@ function App() {
       return;
     }
 
-    // For files, we might already have the description from the directory listing
-    if (item.aiDescription) {
-      addMessage(`🔮 Examining ${item.name}: ${item.aiDescription}`);
-    } else {
-      // If not, fetch the file details
-      try {
-        setGameState(prev => ({ ...prev, isLoading: true }));
-        const [owner, repo] = gameState.repoUrl.replace('https://github.com/', '').split('/');
-        const response = await axios.get(
-          `${API_BASE_URL}/api/file/${owner}/${repo}/${gameState.currentPath ? `${gameState.currentPath}/` : ''}${item.name}`
-        );
+    // For files, fetch detailed information with AI description
+    try {
+      setGameState(prev => ({ ...prev, isLoading: true }));
+      addMessage(`🔍 You focus your arcane sight on the ${item.name} artifact...`);
+      
+      const [owner, repo] = gameState.repoUrl.replace('https://github.com/', '').split('/');
+      const filePath = gameState.currentPath ? `${gameState.currentPath}/${item.name}` : item.name;
+      
+      const response = await axios.get(`${API_BASE_URL}/api/file/${owner}/${repo}/${filePath}`);
+      
+      if (response.data.aiDescription) {
+        addMessage(`🔮 ${response.data.aiDescription}`);
         
-        addMessage(`🔮 Examining ${item.name}: ${response.data.aiDescription || 'This artifact\'s purpose is shrouded in mystery...'}`);
-      } catch (error: any) {
-        addMessage(`❌ The ${item.name} artifact is protected by powerful magic. ${error.response?.data?.error || error.message}`);
-      } finally {
-        setGameState(prev => ({ ...prev, isLoading: false }));
+        // Add to inventory if not already there
+        const inventoryItem = `${item.name} (${gameState.currentPath || 'root'})`;
+        if (!gameState.inventory.includes(inventoryItem)) {
+          setGameState(prev => ({
+            ...prev,
+            inventory: [...prev.inventory, inventoryItem]
+          }));
+          addMessage(`✨ You have gained knowledge of the ${item.name} artifact. It has been added to your inventory.`);
+        }
+      } else {
+        addMessage('🌫️ The artifact\'s secrets remain hidden in the mists of time...');
       }
+    } catch (error: any) {
+      addMessage(`❌ The ${item.name} artifact is protected by powerful magic. ${error.response?.data?.error || error.message}`);
+    } finally {
+      setGameState(prev => ({ ...prev, isLoading: false }));
     }
   };
 
-  const handleRead = async (functionName: string) => {
-    if (!functionName) {
-      addMessage('📖 Please specify a spell or scroll to read.');
+  const handleRead = async (itemName: string) => {
+    if (!itemName) {
+      addMessage('📖 Please specify an artifact to read with your mystical abilities.');
       return;
     }
-    
-    addMessage(`📜 You attempt to read the ${functionName} spell...`);
-    addMessage('🔮 The runes are complex and ancient. This spell\'s secrets require deeper study.');
-    addMessage('💡 Tip: Try examining files first to discover their magical properties.');
+
+    const item = gameState.currentDir.find(
+      item => item.name.toLowerCase() === itemName.toLowerCase()
+    );
+
+    if (!item) {
+      addMessage(`📜 You search for the ${itemName} scroll but find nothing.`);
+      return;
+    }
+
+    if (item.type === 'dir') {
+      addMessage(`🏛️ ${item.name} is a chamber, not a readable artifact. Use "go ${item.name}" to explore it.`);
+      return;
+    }
+
+    // For files, attempt to read the content and get AI interpretation
+    try {
+      setGameState(prev => ({ ...prev, isLoading: true }));
+      addMessage(`📖 You begin to decipher the ancient runes of ${item.name}...`);
+      
+      const [owner, repo] = gameState.repoUrl.replace('https://github.com/', '').split('/');
+      const filePath = gameState.currentPath ? `${gameState.currentPath}/${item.name}` : item.name;
+      
+      const response = await axios.get(`${API_BASE_URL}/api/file/${owner}/${repo}/${filePath}`);
+      
+      if (response.data.decodedContent) {
+        // Get AI description specifically for reading/understanding the code
+        const aiResponse = await axios.post(`${API_BASE_URL}/api/ai/describe`, {
+          code: response.data.decodedContent,
+          type: 'function',
+          fileName: item.name
+        });
+        
+        if (aiResponse.data.description) {
+          addMessage(`📜 As you read the ${item.name} scroll, ancient knowledge unfolds:`);
+          addMessage(`🔮 ${aiResponse.data.description}`);
+          
+          // Show a snippet of the actual code
+          const codeSnippet = response.data.decodedContent.substring(0, 300);
+          addMessage(`📝 The beginning of the scroll reads: "${codeSnippet}${response.data.decodedContent.length > 300 ? '...' : ''}"`);
+        } else {
+          addMessage('🌫️ The runes are too ancient to fully comprehend...');
+        }
+      } else {
+        addMessage('📜 The scroll appears to be blank or written in an unknown script...');
+      }
+    } catch (error: any) {
+      addMessage(`❌ The ${item.name} scroll is protected by powerful enchantments. ${error.response?.data?.error || error.message}`);
+    } finally {
+      setGameState(prev => ({ ...prev, isLoading: false }));
+    }
   };
 
   const handleInventory = () => {
@@ -318,7 +380,6 @@ function App() {
     }
   };
 
-  // Add this function to handle the structure/map command
   const handleStructure = async () => {
     if (!gameState.repoUrl) {
       addMessage('🗺️ No dungeon is currently loaded. Enter a repository to begin your cartographic exploration.');
@@ -343,15 +404,18 @@ function App() {
       '',
       '🧭 go [chamber] - Venture into a new chamber (directory)',
       '🔄 back - Return to the previous chamber you visited',
-      '🔍 examine [artifact] - Study a magical artifact (file)',
-      '📖 read [spell] - Attempt to decipher ancient runes (function)',
+      '🔍 examine [artifact] - Study a magical artifact (file) with AI insights',
+      '📖 read [artifact] - Read the contents of a code scroll with AI interpretation',
       '🎒 inventory - Check your magical satchel',
       '🗺️ structure/map - Unfurl the dungeon map (repo structure)',
       '❓ help - Consult your spellbook',
       '✨ clear - Clear the mystical console',
       '🚪 exit - Leave the current dungeon',
       '',
-      '💡 Tip: Use "back" to retrace your steps through the dungeon!'
+      '💡 Tips:',
+      '• Use "examine" to get AI-powered insights about files',
+      '• Use "read" to see code content with AI explanations',
+      '• Use "back" to retrace your steps through the dungeon!'
     ];
     
     setGameState(prev => ({
@@ -370,7 +434,7 @@ function App() {
     <div className="app">
       <header className="app-header">
         <h1>🧙‍♂️ The Coder's Dungeon</h1>
-        <p>Explore codebases as if they were dungeons</p>
+        <p>Explore codebases as if they were dungeons with AI-powered insights</p>
       </header>
       
       <div className="game-container">
@@ -386,7 +450,7 @@ function App() {
           
           <div className="console-input">
             {gameState.isLoading ? (
-              <div className="loading">Loading...</div>
+              <div className="loading">🔮 The oracle is consulting the ancient spirits...</div>
             ) : (
               <>
                 <span className="prompt">$&gt;</span>
@@ -413,7 +477,7 @@ function App() {
           </div>
           
           <div className="inventory">
-            <h3>Inventory</h3>
+            <h3>Knowledge Inventory</h3>
             {gameState.inventory.length === 0 ? (
               <p>Empty</p>
             ) : (

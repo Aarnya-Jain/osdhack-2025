@@ -1,6 +1,8 @@
 # The Coder's Dungeon 🏰
 
-Transform any GitHub repository into an interactive, text-based adventure game! Explore codebases as if they were dungeons, with files as artifacts and directories as rooms.
+Inspired by classic MUD (Multi-User Dungeon) games, The Coder’s Dungeon reimagines the exploration of codebases as a single-player, offline text adventure.
+
+Navigate your local GitHub repositories as if they were mysterious dungeons — directories become rooms, files become ancient artifacts, and every 'go' is a step deeper into the unknown. Perfect for offline play, this game offers a nostalgic, narrative-driven way to interact with your code like never before.
 
 ## Features
 

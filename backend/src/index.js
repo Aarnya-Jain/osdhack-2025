@@ -36,21 +36,19 @@ const octokit = new Octokit({
 });
 
 // Initialize Google's Generative AI client
-let genAI; // Declare genAI in the module scope
-console.log(process.env.GEMINI_API_KEY + "is the key\n")
+let genAI;
+let aiModel;
 try {
-  // Make sure the API key is provided
   if (!process.env.GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY is not set in the environment variables.");
   }
-  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY); // Assign the instance to the outer variable
+  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
   logger.info('Google Generative AI client initialized successfully.');
 } catch (error) {
-  // Log the error using winston and also to the console for immediate visibility
   logger.error(`Failed to initialize Google Generative AI client: ${error.message}`);
   console.error(`Failed to initialize Google Generative AI client: ${error.message}`);
 }
-
 
 // Cache for storing repository data
 const repoCache = new Map();
@@ -81,7 +79,6 @@ async function fetchRepoContents(owner, repo, path = '') {
     repoCache.set(cacheKey, { data: result, timestamp: Date.now() });
     return result;
   } catch (error) {
-    console.error("Gemini API error:", error);
     logger.error(`Error fetching repo contents: ${error.message}`);
     throw new Error(`Failed to fetch repository contents: ${error.message}`);
   }
@@ -90,29 +87,54 @@ async function fetchRepoContents(owner, repo, path = '') {
 /**
  * Gets AI-generated description for code
  */
-async function getAIDescription(code, type = 'file') {
-  // Add a check to see if the genAI client was initialized
-  if (!genAI) {
+async function getAIDescription(code, type = 'file', fileName = '') {
+  if (!genAI || !aiModel) {
     logger.error('Attempted to use AI description, but the AI client is not initialized.');
     return "The arcane energies are dormant; the AI oracle is silent.";
   }
   
   try {
-    const prompt = type === 'file' 
-      ? `Describe what this code file does in a creative, fantasy-themed way, as if it were a magical artifact or location in a dungeon. Keep it under 3 sentences.\n\n${code.substring(0, 1000)}`
-      : `Describe what this code function does in a creative, fantasy-themed way, as if it were a spell or scroll. Keep it under 2 sentences.\n\n${code.substring(0, 500)}`;
+    let prompt;
     
-    // For text-only input, use the gemini-pro model
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    if (type === 'file') {
+      prompt = `You are a mystical dungeon master describing magical artifacts. Describe what this code file "${fileName}" does in a creative, fantasy-themed way, as if it were a magical artifact or spell scroll in a dungeon. Keep it under 3 sentences and make it engaging and mysterious. Focus on the file's purpose and functionality.
+
+Code:
+${code.substring(0, 2000)}`;
+    } else if (type === 'function') {
+      prompt = `You are a mystical dungeon master describing magical spells. Describe what this code function does in a creative, fantasy-themed way, as if it were a powerful spell or incantation. Keep it under 2 sentences and make it engaging and mysterious.
+
+Code:
+${code.substring(0, 1000)}`;
+    } else {
+      prompt = `You are a mystical dungeon master. Describe this code in a creative, fantasy-themed way, as if it were a magical artifact. Keep it under 2 sentences.
+
+Code:
+${code.substring(0, 1000)}`;
+    }
     
-    const result = await model.generateContent(prompt);
-    
+    const result = await aiModel.generateContent(prompt);
     const response = await result.response;
-    return response.text();
+    const text = response.text();
+    
+    logger.info(`AI description generated successfully for ${type}: ${fileName}`);
+    return text;
   } catch (error) {
     logger.error(`AI description error: ${error.message}`);
-    console.error(error); 
-    return `A magical interference occurred: ${error.message}`;
+    console.error('Gemini API error:', error);
+    return `A magical interference occurred while consulting the oracle: ${error.message}`;
+  }
+}
+
+/**
+ * Decode base64 content safely
+ */
+function decodeContent(content) {
+  try {
+    return Buffer.from(content, 'base64').toString('utf8');
+  } catch (error) {
+    logger.error(`Error decoding content: ${error.message}`);
+    return 'Unable to decode content';
   }
 }
 
@@ -145,8 +167,6 @@ app.get('/api/repo/:owner/:repo/structure', async (req, res) => {
   }
 });
 
-// API Routes
-
 /**
  * Get repository structure
  */
@@ -175,16 +195,38 @@ app.get('/api/file/:owner/:repo/:path(*)', async (req, res) => {
     
     // For single files, get AI description
     if (contents.type === 'file') {
-      const aiDescription = await getAIDescription(atob(contents.content), 'file');
+      const decodedContent = decodeContent(contents.content);
+      const aiDescription = await getAIDescription(decodedContent, 'file', contents.name);
+      
       return res.json({
         ...contents,
-        aiDescription
+        aiDescription,
+        decodedContent // Include decoded content for frontend use
       });
     }
     
     res.json(contents);
   } catch (error) {
     logger.error(`Error in /api/file: ${error.message}`);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Get AI description for specific function or code snippet
+ */
+app.post('/api/ai/describe', async (req, res) => {
+  try {
+    const { code, type, fileName } = req.body;
+    
+    if (!code) {
+      return res.status(400).json({ error: 'Code is required' });
+    }
+    
+    const description = await getAIDescription(code, type || 'function', fileName || '');
+    res.json({ description });
+  } catch (error) {
+    logger.error(`Error in /api/ai/describe: ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 });
