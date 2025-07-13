@@ -43,7 +43,7 @@ try {
     throw new Error("GEMINI_API_KEY is not set in the environment variables.");
   }
   genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+  aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
   logger.info('Google Generative AI client initialized successfully.');
 } catch (error) {
   logger.error(`Failed to initialize Google Generative AI client: ${error.message}`);
@@ -190,18 +190,31 @@ app.get('/api/file/:owner/:repo/:path(*)', async (req, res) => {
     const contents = await fetchRepoContents(owner, repo, path);
     
     if (Array.isArray(contents)) {
+      // If it's a single file in an array, handle as file
+      if (contents.length === 1 && contents[0].type === 'file') {
+        const file = contents[0];
+        const decodedContent = decodeContent(file.content);
+        const aiDescription = await getAIDescription(decodedContent, 'file', file.name);
+
+        return res.json({
+          ...file,
+          aiDescription,
+          decodedContent
+        });
+      }
+      // Otherwise, it's a directory
       return res.json(contents);
     }
-    
+
     // For single files, get AI description
     if (contents.type === 'file') {
       const decodedContent = decodeContent(contents.content);
       const aiDescription = await getAIDescription(decodedContent, 'file', contents.name);
-      
+
       return res.json({
         ...contents,
         aiDescription,
-        decodedContent // Include decoded content for frontend use
+        decodedContent
       });
     }
     

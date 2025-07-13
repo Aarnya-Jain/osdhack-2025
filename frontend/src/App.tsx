@@ -287,6 +287,7 @@ function App() {
       const filePath = gameState.currentPath ? `${gameState.currentPath}/${item.name}` : item.name;
       
       const response = await axios.get(`${API_BASE_URL}/api/file/${owner}/${repo}/${filePath}`);
+      console.log("Backend response:", response.data); // <-- Add this
       
       if (response.data.aiDescription) {
         addMessage(`🔮 ${response.data.aiDescription}`);
@@ -347,6 +348,7 @@ function App() {
           type: 'function',
           fileName: item.name
         });
+        console.log("AI describe response:", aiResponse.data); // <-- Add this
         
         if (aiResponse.data.description) {
           addMessage(`📜 As you read the ${item.name} scroll, ancient knowledge unfolds:`);
