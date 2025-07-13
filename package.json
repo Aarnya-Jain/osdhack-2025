@@ -1,5 +1,13 @@
 {
-  "dependencies": {
-    "treeify": "^1.1.0"
+  "name": "coders-dungeon",
+  "version": "1.0.0",
+  "description": "The Coder's Dungeon - Transform GitHub repos into text adventures",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "dev": "concurrently \"cd api && npm run dev\" \"cd frontend && npm start\"",
+    "start": "cd api && npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }
