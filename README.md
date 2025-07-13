@@ -21,13 +21,13 @@ Navigate your local GitHub repositories as if they were mysterious dungeons — 
 
 ### Installation
 1. Clone this repository
-2. Install dependencies:
+```
+   cd osdhack-2025
+```
+
+2. Set up environment variables:
    ```bash
-   cd coder-dungeon
-   npm install
-   ```
-3. Set up environment variables:
-   ```bash
+   cd backend
    cp .env.example .env
    # Edit .env with your GitHub token and AI API key
    ```
@@ -47,11 +47,17 @@ npm start
 
 1. Start the game and enter a GitHub repository URL
 2. Explore the codebase using simple commands:
-   - `go [direction]` - Move between directories
-   - `examine [file]` - View file details
-   - `read [function]` - View function code
-   - `inventory` - View your collected code artifacts
-   - `help` - Show available commands
+
+   go [chamber]           - Venture into a new chamber (directory)
+   back                   - Return to the previous chamber you visited
+   examine [artifact]     - Study a magical artifact (file) with AI insights
+   read [artifact]        - Read the contents of a code scroll with AI interpretation
+   inventory              - Check your magical satchel (collected code artifacts)
+   structure / map        - Unfurl the dungeon map (repository structure)
+   help                   - Consult your spellbook
+   clear                  - Clear the mystical console
+   exit                   - Leave the current dungeon
+
 
 ## Tech Stack
 
