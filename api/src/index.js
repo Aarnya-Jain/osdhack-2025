@@ -262,6 +262,20 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
+// Add this inside api/index.js
+
+app.get('/api/debug-env', (req, res) => {
+  // This endpoint is safe. It only checks if the keys exist, it does not show them.
+  const geminiKeyExists = !!process.env.GEMINI_API_KEY;
+  const githubTokenExists = !!process.env.GITHUB_TOKEN;
+
+  res.status(200).json({
+    message: "Vercel Environment Variable Check",
+    gemini_key_found: geminiKeyExists,
+    github_token_found: githubTokenExists,
+  });
+});
+
 // Start server
 app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
