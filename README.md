@@ -1,7 +1,3 @@
-Here is your beautifully formatted and cleaned-up `README.md` with consistent indentation, proper markdown formatting, and command formatting:
-
----
-
 # The Coder's Dungeon 🏰
 
 Inspired by classic MUD (Multi-User Dungeon) games, **The Coder’s Dungeon** reimagines the exploration of codebases as a **single-player, offline text adventure**.
@@ -40,7 +36,7 @@ Navigate your local GitHub repositories as if they were mysterious dungeons — 
 2. Set up environment variables:
 
    ```bash
-   cd backend
+   cd api
    cp .env.example .env
    # Edit .env with your GitHub token and AI API key
    ```
@@ -51,7 +47,7 @@ Start the backend and frontend:
 
 ```bash
 # Start the backend server
-cd backend
+cd api
 npm install
 npm start
 ```
