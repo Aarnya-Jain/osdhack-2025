@@ -25,7 +25,6 @@ type GameState = {
   isLoading: boolean;
 };
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 function App() {
   const [input, setInput] = useState('');
@@ -162,7 +161,7 @@ function App() {
       }
 
       // Fetch repository contents
-      const response = await axios.get(`${API_BASE_URL}/api/repo/${owner}/${repo}`);
+      const response = await axios.get(`/api/repo/${owner}/${repo}`);
 
       setGameState(prev => ({
         ...prev,
@@ -197,7 +196,7 @@ function App() {
       const previousPath = gameState.breadcrumbs[gameState.breadcrumbs.length - 1];
       const newBreadcrumbs = gameState.breadcrumbs.slice(0, -1);
 
-      const response = await axios.get(`${API_BASE_URL}/api/file/${owner}/${repo}/${previousPath}`);
+      const response = await axios.get(`/api/file/${owner}/${repo}/${previousPath}`);
 
       if (Array.isArray(response.data)) {
         const backDescriptions = [
@@ -247,7 +246,7 @@ function App() {
       const [owner, repo] = gameState.repoUrl.replace('https://github.com/', '').split('/');
       const newPath = gameState.currentPath ? `${gameState.currentPath}/${dirName}` : dirName;
 
-      const response = await axios.get(`${API_BASE_URL}/api/file/${owner}/${repo}/${newPath}`);
+      const response = await axios.get(`/api/file/${owner}/${repo}/${newPath}`);
 
       if (Array.isArray(response.data)) {
         // It's a directory
@@ -316,7 +315,7 @@ function App() {
       const [owner, repo] = gameState.repoUrl.replace('https://github.com/', '').split('/');
       const filePath = gameState.currentPath ? `${gameState.currentPath}/${item.name}` : item.name;
 
-      const response = await axios.get(`${API_BASE_URL}/api/file/${owner}/${repo}/${filePath}`);
+      const response = await axios.get(`/api/file/${owner}/${repo}/${filePath}`);
       console.log("Backend response:", response.data); // <-- Add this
 
       if (response.data.aiDescription) {
@@ -369,11 +368,11 @@ function App() {
       const [owner, repo] = gameState.repoUrl.replace('https://github.com/', '').split('/');
       const filePath = gameState.currentPath ? `${gameState.currentPath}/${item.name}` : item.name;
 
-      const response = await axios.get(`${API_BASE_URL}/api/file/${owner}/${repo}/${filePath}`);
+      const response = await axios.get(`/api/file/${owner}/${repo}/${filePath}`);
 
       if (response.data.decodedContent) {
         // Get AI description specifically for reading/understanding the code
-        const aiResponse = await axios.post(`${API_BASE_URL}/api/ai/describe`, {
+        const aiResponse = await axios.post(`/api/ai/describe`, {
           code: response.data.decodedContent,
           type: 'function',
           fileName: item.name
@@ -420,7 +419,7 @@ function App() {
     try {
       setGameState(prev => ({ ...prev, isLoading: true }));
       const [owner, repo] = gameState.repoUrl.replace('https://github.com/', '').split('/');
-      const response = await axios.get(`${API_BASE_URL}/api/repo/${owner}/${repo}/structure`);
+      const response = await axios.get(`/api/repo/${owner}/${repo}/structure`);
       addMessage('🗺️ You unfurl the ancient Dungeon Map. The parchment reveals the repository\'s structure:');
       addMessage(response.data.tree);
     } catch (error: any) {
