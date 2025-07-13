@@ -26,7 +26,10 @@ const logger = winston.createLogger({
 });
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Initialize GitHub client
