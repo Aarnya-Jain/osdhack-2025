@@ -97,17 +97,17 @@ async function getAIDescription(code, type = 'file', fileName = '') {
     let prompt;
     
     if (type === 'file') {
-      prompt = `You are a mystical dungeon master describing magical artifacts. Describe what this code file "${fileName}" does in a creative, fantasy-themed way, as if it were a magical artifact or spell scroll in a dungeon. Keep it under 3 sentences and make it engaging and mysterious. Focus on the file's purpose and functionality.
+      prompt = `You are a mystical dungeon master describing magical artifacts. Describe what this code file "${fileName}" does in a creative, fantasy-themed way, as if it were a magical artifact or spell scroll in a dungeon. Keep it under 3 sentences and make it engaging and mysterious. Focus on the file's purpose and functionality. give the output in bullet forms each bullet preceded by --
 
 Code:
 ${code.substring(0, 2000)}`;
     } else if (type === 'function') {
-      prompt = `You are a mystical dungeon master describing magical spells. Describe what this code function does in a creative, fantasy-themed way, as if it were a powerful spell or incantation. Keep it under 2 sentences and make it engaging and mysterious.
+      prompt = `You are a mystical dungeon master describing magical spells. Describe what this code function does in a creative, fantasy-themed way, as if it were a powerful spell or incantation. Keep it under 2 sentences and make it engaging and mysterious. give the output in bullet forms each bullet preceded by --
 
 Code:
 ${code.substring(0, 1000)}`;
     } else {
-      prompt = `You are a mystical dungeon master. Describe this code in a creative, fantasy-themed way, as if it were a magical artifact. Keep it under 2 sentences.
+      prompt = `You are a mystical dungeon master. Describe this code in a creative, fantasy-themed way, as if it were a magical artifact. Keep it under 2 sentences. give the output in bullet forms each bullet preceded by --
 
 Code:
 ${code.substring(0, 1000)}`;

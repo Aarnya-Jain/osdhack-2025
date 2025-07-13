@@ -8,6 +8,11 @@
   --border-color: #2a3a2a;
   --input-bg: #0f1a0f;
   --console-bg: rgba(10, 15, 10, 0.9);
+  --light-yellow:#1e6b1e;
+}
+
+html {
+  font-size: 12px;
 }
 
 * {
@@ -16,9 +21,11 @@
   padding: 0;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 body {
   margin: 0;
-  font-family: 'Courier New', monospace;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
   background-color: var(--bg-color);
   color: var(--text-color);
   line-height: 1.6;
@@ -45,10 +52,34 @@ body {
 }
 
 .app-header h1 {
-  color: var(--primary-color);
   font-size: 2.2rem;
   margin-bottom: 0.5rem;
-  text-shadow: 0 0 5px rgba(57, 255, 20, 0.5);
+  /* Applies the new pixelated blink animation */
+  animation: pixel-blink 3s steps(6) infinite;
+}
+
+
+@keyframes pixel-blink {
+  0%, 49% {
+    /* Base State: Green shadow */
+    text-shadow: 2px 2px 0 var(--primary-color);
+    color: var(--light-yellow);
+  }
+  50%, 74% {
+    /* Glitch State 1: Dim and different color */
+    text-shadow: 2px 2px 0 var(--border-color);
+    color: var(--secondary-color);
+  }
+  75%, 99% {
+    /* Glitch State 2: Bright and different direction */
+    text-shadow: -2px -2px 0 var(--accent-color);
+    color: #fff;
+  }
+  100% {
+     /* Return to Base State */
+    text-shadow: 2px 2px 0 var(--light-yellow);
+    color: var(--primary-color);
+  }
 }
 
 .app-header p {
@@ -77,13 +108,13 @@ body {
 }
 
 .console-output {
-  flex: 1;
+  /* flex: 1; */ /* <-- REMOVE THIS LINE */
   padding: 1rem;
-  overflow-y: auto;
-  height: 60vh;
+  overflow-y: auto; /* This will now create the scrollbar */
+  height: 60vh;    /* This now enforces a fixed height */
   background-color: rgba(0, 0, 0, 0.3);
   border-bottom: 1px solid var(--border-color);
-  font-family: 'Courier New', monospace;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
   font-size: 0.95rem;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -110,6 +141,7 @@ body {
 .prompt {
   color: var(--primary-color);
   margin-right: 0.5rem;
+  margin-bottom: 10px;
   font-weight: bold;
 }
 
@@ -118,7 +150,7 @@ body {
   background: transparent;
   border: none;
   color: var(--primary-color);
-  font-family: 'Courier New', monospace;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
   font-size: 1rem;
   outline: none;
   padding: 0.5rem 0;
@@ -150,7 +182,7 @@ body {
 }
 
 .path {
-  font-family: 'Courier New', monospace;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
   color: var(--secondary-color);
   font-size: 0.9rem;
   margin-top: 0.5rem;
@@ -244,4 +276,22 @@ body {
 @keyframes blink-caret {
   from, to { border-color: transparent; }
   50% { border-color: var(--primary-color); }
+}
+
+.app-footer p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 10px;
+}
+
+.heart{
+  width: 16px;
+}
+
+.blinking-cursor {
+  animation: blink-caret 1s step-end infinite;
+  color: var(--primary-color);
+  font-weight: bold;
 }

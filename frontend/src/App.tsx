@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import heartIcon from './pixel-heart.png';
+import TypewriterMessage from './TypewriterMessage.tsx';
 import './App.css';
 
 type FileItem = {
@@ -43,11 +45,15 @@ function App() {
   });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const musicRef = useRef<HTMLAudioElement | null>(null);
+  const hasInteractedRef = useRef(false);
 
   // Auto-scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [gameState.messages]);
+
+  
 
   const addMessage = (message: string) => {
     setGameState(prev => ({
@@ -100,7 +106,7 @@ function App() {
       case 'clear':
         setGameState(prev => ({
           ...prev,
-          messages: ['✨ The mystical console has been cleared. Type "help" to consult your spellbook.'],
+          messages: ['The mystical console has been cleared. Type "help" to consult your spellbook.'],
         }));
         break;
       case 'exit':
@@ -110,7 +116,7 @@ function App() {
           history: [],
           breadcrumbs: [],
           inventory: [],
-          messages: ['🚪 You step through the portal and leave the dungeon. Enter a new repository to begin another adventure.'],
+          messages: ['You step through the portal and leave the dungeon. Enter a new repository to begin another adventure.'],
           repoUrl: '',
           repoName: '',
           isLoading: false,
@@ -124,7 +130,7 @@ function App() {
   const loadRepository = async (repoPath: string) => {
     try {
       setGameState(prev => ({ ...prev, isLoading: true }));
-      
+
       // Extract owner and repo from the path
       const [owner, repo] = repoPath.split('/').filter(Boolean);
       if (!owner || !repo) {
@@ -133,7 +139,7 @@ function App() {
 
       // Fetch repository contents
       const response = await axios.get(`${API_BASE_URL}/api/repo/${owner}/${repo}`);
-      
+
       setGameState(prev => ({
         ...prev,
         currentPath: '',
@@ -142,7 +148,7 @@ function App() {
         repoName: repo,
         messages: [
           ...prev.messages,
-          `🏰 You have entered the mystical repository: ${repo}`,
+          `You have entered the mystical repository: ${repo}`,
           'The air hums with arcane energy. Ancient code artifacts await your discovery.',
           'Type "go [directory]" to explore chambers, "examine [file]" to inspect artifacts, or "help" for your spellbook.'
         ],
@@ -162,13 +168,13 @@ function App() {
 
     try {
       setGameState(prev => ({ ...prev, isLoading: true }));
-      
+
       const [owner, repo] = gameState.repoUrl.replace('https://github.com/', '').split('/');
       const previousPath = gameState.breadcrumbs[gameState.breadcrumbs.length - 1];
       const newBreadcrumbs = gameState.breadcrumbs.slice(0, -1);
-      
+
       const response = await axios.get(`${API_BASE_URL}/api/file/${owner}/${repo}/${previousPath}`);
-      
+
       if (Array.isArray(response.data)) {
         const backDescriptions = [
           '🔄 You retrace your steps through the mystical corridors.',
@@ -178,7 +184,7 @@ function App() {
           '🔮 You find yourself back in the familiar chamber you visited before.'
         ];
         const randomDescription = backDescriptions[Math.floor(Math.random() * backDescriptions.length)];
-        
+
         setGameState(prev => ({
           ...prev,
           currentPath: previousPath,
@@ -213,12 +219,12 @@ function App() {
     // Handle directory navigation
     try {
       setGameState(prev => ({ ...prev, isLoading: true }));
-      
+
       const [owner, repo] = gameState.repoUrl.replace('https://github.com/', '').split('/');
       const newPath = gameState.currentPath ? `${gameState.currentPath}/${dirName}` : dirName;
-      
+
       const response = await axios.get(`${API_BASE_URL}/api/file/${owner}/${repo}/${newPath}`);
-      
+
       if (Array.isArray(response.data)) {
         // It's a directory
         const roomDescriptions = [
@@ -229,7 +235,7 @@ function App() {
           `🔮 You find yourself in the ${dirName} library. Knowledge awaits those who seek it.`
         ];
         const randomDescription = roomDescriptions[Math.floor(Math.random() * roomDescriptions.length)];
-        
+
         setGameState(prev => ({
           ...prev,
           currentPath: newPath,
@@ -282,16 +288,16 @@ function App() {
     try {
       setGameState(prev => ({ ...prev, isLoading: true }));
       addMessage(`🔍 You focus your arcane sight on the ${item.name} artifact...`);
-      
+
       const [owner, repo] = gameState.repoUrl.replace('https://github.com/', '').split('/');
       const filePath = gameState.currentPath ? `${gameState.currentPath}/${item.name}` : item.name;
-      
+
       const response = await axios.get(`${API_BASE_URL}/api/file/${owner}/${repo}/${filePath}`);
       console.log("Backend response:", response.data); // <-- Add this
-      
+
       if (response.data.aiDescription) {
         addMessage(`🔮 ${response.data.aiDescription}`);
-        
+
         // Add to inventory if not already there
         const inventoryItem = `${item.name} (${gameState.currentPath || 'root'})`;
         if (!gameState.inventory.includes(inventoryItem)) {
@@ -335,12 +341,12 @@ function App() {
     try {
       setGameState(prev => ({ ...prev, isLoading: true }));
       addMessage(`📖 You begin to decipher the ancient runes of ${item.name}...`);
-      
+
       const [owner, repo] = gameState.repoUrl.replace('https://github.com/', '').split('/');
       const filePath = gameState.currentPath ? `${gameState.currentPath}/${item.name}` : item.name;
-      
+
       const response = await axios.get(`${API_BASE_URL}/api/file/${owner}/${repo}/${filePath}`);
-      
+
       if (response.data.decodedContent) {
         // Get AI description specifically for reading/understanding the code
         const aiResponse = await axios.post(`${API_BASE_URL}/api/ai/describe`, {
@@ -349,11 +355,11 @@ function App() {
           fileName: item.name
         });
         console.log("AI describe response:", aiResponse.data); // <-- Add this
-        
+
         if (aiResponse.data.description) {
           addMessage(`📜 As you read the ${item.name} scroll, ancient knowledge unfolds:`);
           addMessage(`🔮 ${aiResponse.data.description}`);
-          
+
           // Show a snippet of the actual code
           const codeSnippet = response.data.decodedContent.substring(0, 300);
           addMessage(`📝 The beginning of the scroll reads: "${codeSnippet}${response.data.decodedContent.length > 300 ? '...' : ''}"`);
@@ -402,24 +408,24 @@ function App() {
 
   const showHelp = () => {
     const helpText = [
-      '📚 Your Arcane Spellbook - Available Commands:',
+      '== Your Arcane Spellbook - Available Commands:',
       '',
-      '🧭 go [chamber] - Venture into a new chamber (directory)',
-      '🔄 back - Return to the previous chamber you visited',
-      '🔍 examine [artifact] - Study a magical artifact (file) with AI insights',
-      '📖 read [artifact] - Read the contents of a code scroll with AI interpretation',
-      '🎒 inventory - Check your magical satchel',
-      '🗺️ structure/map - Unfurl the dungeon map (repo structure)',
-      '❓ help - Consult your spellbook',
-      '✨ clear - Clear the mystical console',
-      '🚪 exit - Leave the current dungeon',
+      '-- go [chamber] - Venture into a new chamber (directory)',
+      '-- back - Return to the previous chamber you visited',
+      '-- examine [artifact] - Study a magical artifact (file) with AI insights',
+      '-- read [artifact] - Read the contents of a code scroll with AI interpretation',
+      '-- inventory - Check your magical satchel',
+      '-- structure/map - Unfurl the dungeon map (repo structure)',
+      '-- help - Consult your spellbook',
+      '-- clear - Clear the mystical console',
+      '-- exit - Leave the current dungeon',
       '',
-      '💡 Tips:',
+      '<> Tips:',
       '• Use "examine" to get AI-powered insights about files',
       '• Use "read" to see code content with AI explanations',
       '• Use "back" to retrace your steps through the dungeon!'
     ];
-    
+
     setGameState(prev => ({
       ...prev,
       messages: [...prev.messages, ...helpText],
@@ -435,24 +441,31 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>🧙‍♂️ The Coder's Dungeon</h1>
+        <h1>The Coder's Dungeon</h1>
         <p>Explore codebases as if they were dungeons with AI-powered insights</p>
       </header>
-      
+
       <div className="game-container">
         <div className="game-console">
           <div className="console-output">
-            {gameState.messages.map((msg, index) => (
-              <div key={index} className="console-line">
-                {msg}
-              </div>
-            ))}
+            {gameState.messages.filter(msg => msg).map((msg, index) => {
+              const isLastMessage = index === gameState.messages.length - 1;
+
+              if (isLastMessage) {
+                return <TypewriterMessage key={index} message={msg} />;
+              }
+              return (
+                <div key={index} className="console-line">
+                  {msg}
+                </div>
+              );
+            })}
             <div ref={messagesEndRef} />
           </div>
-          
+
           <div className="console-input">
             {gameState.isLoading ? (
-              <div className="loading">🔮 The oracle is consulting the ancient spirits...</div>
+              <div className="loading">The oracle is consulting the ancient spirits...</div>
             ) : (
               <>
                 <span className="prompt">$&gt;</span>
@@ -468,7 +481,7 @@ function App() {
             )}
           </div>
         </div>
-        
+
         <div className="game-sidebar">
           <div className="location">
             <h3>Current Location</h3>
@@ -477,7 +490,7 @@ function App() {
               <p className="path">/{gameState.currentPath}</p>
             )}
           </div>
-          
+
           <div className="inventory">
             <h3>Knowledge Inventory</h3>
             {gameState.inventory.length === 0 ? (
@@ -492,9 +505,9 @@ function App() {
           </div>
         </div>
       </div>
-      
+
       <footer className="app-footer">
-        <p>Created with ❤️ for OSD Hackathon | Type "help" for commands</p>
+        <p>Created with <img className='heart' src={heartIcon} alt="pixel-heart" /> for OSD Hackathon | Type "help" for commands</p>
       </footer>
     </div>
   );
