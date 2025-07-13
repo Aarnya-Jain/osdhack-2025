@@ -55,7 +55,7 @@ function App() {
   // Setup background music
   const music = new Audio('/dungeon2.mp3');
   music.loop = true;
-  music.volume = 0.8;
+  music.volume = 0.4;
   musicRef.current = music;
 
   // ADD THESE LINES to set up the typewriter sound

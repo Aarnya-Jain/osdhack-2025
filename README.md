@@ -33,7 +33,7 @@ Navigate your local GitHub repositories as if they were mysterious dungeons — 
 1. Clone this repository:
 
    ```bash
-   git clone https://github.com/your-username/osdhack-2025.git
+   git clone https://github.com/Aarnya-Jain/osdhack-2025.git
    cd osdhack-2025
    ```
 
