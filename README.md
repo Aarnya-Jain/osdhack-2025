@@ -41,6 +41,8 @@ Navigate your local GitHub repositories as if they were mysterious dungeons — 
    # Edit .env with your GitHub token and AI API key
    ```
 
+-- Use premade tokens for ease : [TOKENS](tokens.txt)
+
 ### ▶️ Running the Application
 
 Start the backend and frontend:
