@@ -55,7 +55,7 @@ npm start
 
 - **Frontend**: React + TypeScript
 - **Backend**: Node.js + Express
-- **AI**: OpenAI API for code explanations
+- **AI**: Gemini API for code explanations
 - **Version Control**: GitHub API
 
 ## Contributing
