@@ -36,7 +36,21 @@ const octokit = new Octokit({
 });
 
 // Initialize Google's Generative AI client
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+let genAI; // Declare genAI in the module scope
+console.log(process.env.GEMINI_API_KEY + "is the key\n")
+try {
+  // Make sure the API key is provided
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY is not set in the environment variables.");
+  }
+  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY); // Assign the instance to the outer variable
+  logger.info('Google Generative AI client initialized successfully.');
+} catch (error) {
+  // Log the error using winston and also to the console for immediate visibility
+  logger.error(`Failed to initialize Google Generative AI client: ${error.message}`);
+  console.error(`Failed to initialize Google Generative AI client: ${error.message}`);
+}
+
 
 // Cache for storing repository data
 const repoCache = new Map();
@@ -67,6 +81,7 @@ async function fetchRepoContents(owner, repo, path = '') {
     repoCache.set(cacheKey, { data: result, timestamp: Date.now() });
     return result;
   } catch (error) {
+    console.error("Gemini API error:", error);
     logger.error(`Error fetching repo contents: ${error.message}`);
     throw new Error(`Failed to fetch repository contents: ${error.message}`);
   }
@@ -76,28 +91,28 @@ async function fetchRepoContents(owner, repo, path = '') {
  * Gets AI-generated description for code
  */
 async function getAIDescription(code, type = 'file') {
+  // Add a check to see if the genAI client was initialized
+  if (!genAI) {
+    logger.error('Attempted to use AI description, but the AI client is not initialized.');
+    return "The arcane energies are dormant; the AI oracle is silent.";
+  }
+  
   try {
     const prompt = type === 'file' 
       ? `Describe what this code file does in a creative, fantasy-themed way, as if it were a magical artifact or location in a dungeon. Keep it under 3 sentences.\n\n${code.substring(0, 1000)}`
       : `Describe what this code function does in a creative, fantasy-themed way, as if it were a spell or scroll. Keep it under 2 sentences.\n\n${code.substring(0, 500)}`;
     
     // For text-only input, use the gemini-pro model
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
     
-    const result = await model.generateContent({
-      contents: [{
-        role: "user",
-        parts: [{
-          text: `You are a creative dungeon master who describes code in a fantasy adventure style. ${prompt}`
-        }]
-      }]
-    });
+    const result = await model.generateContent(prompt);
     
     const response = await result.response;
     return response.text();
   } catch (error) {
     logger.error(`AI description error: ${error.message}`);
-    return "This artifact's purpose is shrouded in mystery...";
+    console.error(error); 
+    return `A magical interference occurred: ${error.message}`;
   }
 }
 

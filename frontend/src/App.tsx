@@ -14,6 +14,7 @@ type GameState = {
   currentPath: string;
   currentDir: FileItem[];
   history: string[];
+  breadcrumbs: string[]; // Add breadcrumbs for navigation
   inventory: string[];
   messages: string[];
   repoUrl: string;
@@ -29,6 +30,7 @@ function App() {
     currentPath: '',
     currentDir: [],
     history: [],
+    breadcrumbs: [], // Initialize breadcrumbs
     inventory: [],
     messages: [
       'Welcome to The Coder\'s Dungeon!',
@@ -75,6 +77,9 @@ function App() {
       case 'go':
         await handleGo(args);
         break;
+      case 'back':
+        await handleBack();
+        break;
       case 'examine':
         await handleExamine(args);
         break;
@@ -94,7 +99,7 @@ function App() {
       case 'clear':
         setGameState(prev => ({
           ...prev,
-          messages: ['Console cleared. Type "help" for available commands.'],
+          messages: ['✨ The mystical console has been cleared. Type "help" to consult your spellbook.'],
         }));
         break;
       case 'exit':
@@ -102,8 +107,9 @@ function App() {
           currentPath: '',
           currentDir: [],
           history: [],
+          breadcrumbs: [], // Reset breadcrumbs
           inventory: [],
-          messages: ['You have left the dungeon. Enter a new repository URL to begin again.'],
+          messages: ['🚪 You step through the portal and leave the dungeon. Enter a new repository to begin another adventure.'],
           repoUrl: '',
           repoName: '',
           isLoading: false,
@@ -135,12 +141,58 @@ function App() {
         repoName: repo,
         messages: [
           ...prev.messages,
-          `You have entered the repository: ${repo}`,
-          'Type "go [directory]" to explore, "examine [file]" to inspect files, or "help" for more commands.'
+          `🏰 You have entered the mystical repository: ${repo}`,
+          'The air hums with arcane energy. Ancient code artifacts await your discovery.',
+          'Type "go [directory]" to explore chambers, "examine [file]" to inspect artifacts, or "help" for your spellbook.'
         ],
       }));
     } catch (error: any) {
-      addMessage(`Error: ${error.response?.data?.error || error.message}`);
+      addMessage(`❌ The portal to this repository is sealed. ${error.response?.data?.error || error.message}`);
+    } finally {
+      setGameState(prev => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  // Add function to handle going back
+  const handleBack = async () => {
+    if (gameState.breadcrumbs.length === 0) {
+      addMessage('🏛️ You are already at the entrance of the dungeon. There is nowhere to go back to.');
+      return;
+    }
+
+    try {
+      setGameState(prev => ({ ...prev, isLoading: true }));
+      
+      const [owner, repo] = gameState.repoUrl.replace('https://github.com/', '').split('/');
+      const previousPath = gameState.breadcrumbs[gameState.breadcrumbs.length - 1];
+      const newBreadcrumbs = gameState.breadcrumbs.slice(0, -1);
+      
+      const response = await axios.get(`${API_BASE_URL}/api/file/${owner}/${repo}/${previousPath}`);
+      
+      if (Array.isArray(response.data)) {
+        const backDescriptions = [
+          '🔄 You retrace your steps through the mystical corridors.',
+          '🏛️ You return to the previous chamber, the familiar arcane energies welcome you back.',
+          '🧭 You navigate back through the dungeon\'s winding passages.',
+          '⚡ You step back through the portal to the previous realm.',
+          '🔮 You find yourself back in the familiar chamber you visited before.'
+        ];
+        const randomDescription = backDescriptions[Math.floor(Math.random() * backDescriptions.length)];
+        
+        setGameState(prev => ({
+          ...prev,
+          currentPath: previousPath,
+          currentDir: response.data,
+          breadcrumbs: newBreadcrumbs,
+          messages: [
+            ...prev.messages,
+            randomDescription,
+            `You are now in the ${previousPath || 'root'} chamber.`
+          ],
+        }));
+      }
+    } catch (error: any) {
+      addMessage(`❌ The path back is blocked by ancient wards. ${error.response?.data?.error || error.message}`);
     } finally {
       setGameState(prev => ({ ...prev, isLoading: false }));
     }
@@ -148,14 +200,13 @@ function App() {
 
   const handleGo = async (dirName: string) => {
     if (!dirName) {
-      addMessage('Please specify a direction or directory name.');
+      addMessage('🗺️ Please specify a direction or chamber name to explore.');
       return;
     }
 
     // Check for navigation commands
     if (['north', 'south', 'east', 'west', 'up', 'down'].includes(dirName)) {
-      addMessage(`You move ${dirName}.`);
-      // Add more sophisticated navigation logic here
+      addMessage(`🧭 You move ${dirName}, but find yourself in the same chamber. The dungeon's magic keeps you within the current realm.`);
       return;
     }
 
@@ -170,23 +221,34 @@ function App() {
       
       if (Array.isArray(response.data)) {
         // It's a directory
+        const roomDescriptions = [
+          `🏛️ You step into the ${dirName} chamber. The walls are lined with ancient scrolls and magical artifacts.`,
+          `🌌 You enter the ${dirName} realm. Mystical energies pulse through the air.`,
+          `🏰 You cross the threshold into ${dirName}. This chamber holds secrets yet to be discovered.`,
+          `⚡ You venture into the ${dirName} sanctum. Arcane symbols glow faintly on the walls.`,
+          `🔮 You find yourself in the ${dirName} library. Knowledge awaits those who seek it.`
+        ];
+        const randomDescription = roomDescriptions[Math.floor(Math.random() * roomDescriptions.length)];
+        
         setGameState(prev => ({
           ...prev,
           currentPath: newPath,
           currentDir: response.data,
           history: [...prev.history, newPath],
+          breadcrumbs: [...prev.breadcrumbs, prev.currentPath], // Add current path to breadcrumbs
           messages: [
             ...prev.messages,
-            `You enter the ${dirName} directory.`,
+            randomDescription,
+            `You see ${response.data.length} artifacts and chambers to explore.`
           ],
         }));
       } else {
         // It's a file
-        addMessage(`You examine the ${dirName} file.`);
-        addMessage(response.data.aiDescription || 'This file appears to be empty.');
+        addMessage(`📜 You examine the ${dirName} artifact.`);
+        addMessage(response.data.aiDescription || 'This artifact\'s purpose is shrouded in mystery...');
       }
     } catch (error: any) {
-      addMessage(`You can't go that way. ${error.response?.data?.error || error.message}`);
+      addMessage(`🚫 The path to ${dirName} is blocked by ancient wards. ${error.response?.data?.error || error.message}`);
     } finally {
       setGameState(prev => ({ ...prev, isLoading: false }));
     }
@@ -194,7 +256,7 @@ function App() {
 
   const handleExamine = async (itemName: string) => {
     if (!itemName) {
-      addMessage('Please specify an item to examine.');
+      addMessage('🔍 Please specify an artifact to examine with your arcane sight.');
       return;
     }
 
@@ -203,18 +265,18 @@ function App() {
     );
 
     if (!item) {
-      addMessage(`You don't see a ${itemName} here.`);
+      addMessage(`👁️ You search the chamber but find no artifact named "${itemName}".`);
       return;
     }
 
     if (item.type === 'dir') {
-      addMessage(`${item.name} is a directory. Type "go ${item.name}" to enter it.`);
+      addMessage(`🏛️ ${item.name} is a chamber leading to deeper realms. Type "go ${item.name}" to enter its depths.`);
       return;
     }
 
     // For files, we might already have the description from the directory listing
     if (item.aiDescription) {
-      addMessage(`Examining ${item.name}: ${item.aiDescription}`);
+      addMessage(`🔮 Examining ${item.name}: ${item.aiDescription}`);
     } else {
       // If not, fetch the file details
       try {
@@ -224,9 +286,9 @@ function App() {
           `${API_BASE_URL}/api/file/${owner}/${repo}/${gameState.currentPath ? `${gameState.currentPath}/` : ''}${item.name}`
         );
         
-        addMessage(`Examining ${item.name}: ${response.data.aiDescription || 'No description available.'}`);
+        addMessage(`🔮 Examining ${item.name}: ${response.data.aiDescription || 'This artifact\'s purpose is shrouded in mystery...'}`);
       } catch (error: any) {
-        addMessage(`Could not examine ${item.name}: ${error.response?.data?.error || error.message}`);
+        addMessage(`❌ The ${item.name} artifact is protected by powerful magic. ${error.response?.data?.error || error.message}`);
       } finally {
         setGameState(prev => ({ ...prev, isLoading: false }));
       }
@@ -234,16 +296,22 @@ function App() {
   };
 
   const handleRead = async (functionName: string) => {
-    // This would be implemented to show function contents
-    addMessage(`You attempt to read the ${functionName} function...`);
-    addMessage('(Function reading feature coming soon!)');
+    if (!functionName) {
+      addMessage('📖 Please specify a spell or scroll to read.');
+      return;
+    }
+    
+    addMessage(`📜 You attempt to read the ${functionName} spell...`);
+    addMessage('🔮 The runes are complex and ancient. This spell\'s secrets require deeper study.');
+    addMessage('💡 Tip: Try examining files first to discover their magical properties.');
   };
 
   const handleInventory = () => {
     if (gameState.inventory.length === 0) {
-      addMessage('Your inventory is empty.');
+      addMessage('🎒 Your magical satchel is empty.');
+      addMessage('💡 Explore chambers and examine artifacts to collect knowledge.');
     } else {
-      addMessage('You are carrying:');
+      addMessage('🎒 Your magical satchel contains:');
       gameState.inventory.forEach((item, index) => {
         addMessage(`  ${index + 1}. ${item}`);
       });
@@ -253,16 +321,17 @@ function App() {
   // Add this function to handle the structure/map command
   const handleStructure = async () => {
     if (!gameState.repoUrl) {
-      addMessage('No repository loaded. Enter a repository to begin your adventure.');
+      addMessage('🗺️ No dungeon is currently loaded. Enter a repository to begin your cartographic exploration.');
       return;
     }
     try {
       setGameState(prev => ({ ...prev, isLoading: true }));
       const [owner, repo] = gameState.repoUrl.replace('https://github.com/', '').split('/');
       const response = await axios.get(`${API_BASE_URL}/api/repo/${owner}/${repo}/structure`);
-      addMessage('Dungeon Map:\n' + response.data.tree);
+      addMessage('🗺️ You unfurl the ancient Dungeon Map. The parchment reveals the repository\'s structure:');
+      addMessage(response.data.tree);
     } catch (error: any) {
-      addMessage('Could not fetch the dungeon map. ' + (error.response?.data?.error || error.message));
+      addMessage('❌ The dungeon map is obscured by magical interference. ' + (error.response?.data?.error || error.message));
     } finally {
       setGameState(prev => ({ ...prev, isLoading: false }));
     }
@@ -270,15 +339,19 @@ function App() {
 
   const showHelp = () => {
     const helpText = [
-      'Available commands:',
-      '  go [direction/directory] - Move in a direction or enter a directory',
-      '  examine [file] - Get information about a file',
-      '  read [function] - Read the contents of a function',
-      '  inventory - View your collected items',
-      '  structure/map - Show the full dungeon map (repo structure)',
-      '  help - Show this help message',
-      '  clear - Clear the console',
-      '  exit - Leave the current repository',
+      '📚 Your Arcane Spellbook - Available Commands:',
+      '',
+      '🧭 go [chamber] - Venture into a new chamber (directory)',
+      '🔄 back - Return to the previous chamber you visited',
+      '🔍 examine [artifact] - Study a magical artifact (file)',
+      '📖 read [spell] - Attempt to decipher ancient runes (function)',
+      '🎒 inventory - Check your magical satchel',
+      '🗺️ structure/map - Unfurl the dungeon map (repo structure)',
+      '❓ help - Consult your spellbook',
+      '✨ clear - Clear the mystical console',
+      '🚪 exit - Leave the current dungeon',
+      '',
+      '💡 Tip: Use "back" to retrace your steps through the dungeon!'
     ];
     
     setGameState(prev => ({

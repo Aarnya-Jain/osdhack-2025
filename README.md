@@ -37,7 +37,7 @@ cd backend
 npm start
 
 # In a new terminal, start the frontend
-cd frontend
+cd ../frontend
 npm start
 ```
 
@@ -55,7 +55,7 @@ npm start
 
 - **Frontend**: React + TypeScript
 - **Backend**: Node.js + Express
-- **AI**: OpenAI API for code explanations
+- **AI**: Gemini API for code explanations
 - **Version Control**: GitHub API
 
 ## Contributing
