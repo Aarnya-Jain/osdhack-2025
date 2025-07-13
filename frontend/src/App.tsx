@@ -48,12 +48,30 @@ function App() {
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const hasInteractedRef = useRef(false);
 
-  // Auto-scroll to bottom of messages
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [gameState.messages]);
+  const typeSoundRef = useRef<HTMLAudioElement | null>(null);
 
-  
+
+  useEffect(() => {
+  // Setup background music
+  const music = new Audio('/dungeon2.mp3');
+  music.loop = true;
+  music.volume = 0.8;
+  musicRef.current = music;
+
+  // ADD THESE LINES to set up the typewriter sound
+  const typeSound = new Audio('/click.mp3');
+  typeSound.preload = 'auto';
+  typeSound.volume = 0.05;
+  typeSound.load();
+  typeSoundRef.current = typeSound;
+
+  // Cleanup function
+  return () => {
+    music.pause();
+  };
+}, []);
+
+
 
   const addMessage = (message: string) => {
     setGameState(prev => ({
@@ -64,6 +82,12 @@ function App() {
 
   const processCommand = async (command: string) => {
     if (!command.trim()) return;
+
+    if (!hasInteractedRef.current) {
+      hasInteractedRef.current = true;
+      // Add a .catch() here to handle any music playback errors gracefully
+      musicRef.current?.play().catch(e => console.error("Music autoplay failed:", e));
+    }
 
     const parts = command.trim().toLowerCase().split(' ');
     const cmd = parts[0];
@@ -101,7 +125,7 @@ function App() {
         await handleStructure();
         break;
       case 'help':
-        showHelp();
+        await showHelp();
         break;
       case 'clear':
         setGameState(prev => ({
@@ -134,7 +158,7 @@ function App() {
       // Extract owner and repo from the path
       const [owner, repo] = repoPath.split('/').filter(Boolean);
       if (!owner || !repo) {
-        throw new Error('Please provide a valid GitHub repository path (e.g., facebook/react)');
+        throw new Error('❌ Please provide a valid GitHub repository path (e.g., facebook/react)');
       }
 
       // Fetch repository contents
@@ -406,7 +430,7 @@ function App() {
     }
   };
 
-  const showHelp = () => {
+   const showHelp = async () => {
     const helpText = [
       '== Your Arcane Spellbook - Available Commands:',
       '',
@@ -426,10 +450,12 @@ function App() {
       '• Use "back" to retrace your steps through the dungeon!'
     ];
 
-    setGameState(prev => ({
-      ...prev,
-      messages: [...prev.messages, ...helpText],
-    }));
+    // This loop adds each line one by one with a delay
+    for (const line of helpText) {
+      addMessage(line);
+      // This creates a short pause to let the typewriter finish
+      await new Promise(resolve => setTimeout(resolve, 500)); 
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -452,7 +478,7 @@ function App() {
               const isLastMessage = index === gameState.messages.length - 1;
 
               if (isLastMessage) {
-                return <TypewriterMessage key={index} message={msg} />;
+                return <TypewriterMessage key={index} message={msg} audio={typeSoundRef.current} />;
               }
               return (
                 <div key={index} className="console-line">
