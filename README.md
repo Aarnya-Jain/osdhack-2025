@@ -36,7 +36,7 @@ Navigate your local GitHub repositories as if they were mysterious dungeons — 
 2. Set up environment variables:
 
    ```bash
-   cd api
+   cd backend
    cp .env.example .env
    # Edit .env with your GitHub token and AI API key
    ```
@@ -49,7 +49,7 @@ Start the backend and frontend:
 
 ```bash
 # Start the backend server
-cd api
+cd backend
 npm install
 npm start
 ```
